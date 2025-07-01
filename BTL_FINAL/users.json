@@ -1,0 +1,153 @@
+{
+  "user_a": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "111222333",
+      "balance": 52020460.0,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "user_b": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "444555666",
+      "balance": 26000000.0,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "admin": {
+    "password": "admin",
+    "role": "admin",
+    "data": {
+      "score": 170
+    }
+  },
+  "TatThanh": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "921726539",
+      "balance": 989541.0,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "HoangMinh": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "654219011",
+      "balance": 9020112.0,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "user_c": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "593999528",
+      "balance": 10000000,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "QuanTriVien_1": {
+    "password": "123",
+    "role": "admin",
+    "data": {
+      "score": 865
+    }
+  },
+  "XuanTruong": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "512940965",
+      "balance": 19000000.0,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "1": {
+    "password": "1",
+    "role": "client",
+    "data": {
+      "account_number": "439389566",
+      "balance": 9969776.0,
+      "pin": "1234",
+      "pin_registered": true
+    }
+  },
+  "6": {
+    "password": "6",
+    "role": "admin",
+    "data": {
+      "score": 0
+    }
+  },
+  "a": {
+    "password": "a",
+    "role": "client",
+    "data": {
+      "account_number": "319831546",
+      "balance": 10000000,
+      "pin": "1111",
+      "pin_registered": true
+    }
+  },
+  "b": {
+    "password": "b",
+    "role": "client",
+    "data": {
+      "account_number": "733574076",
+      "balance": 10000000,
+      "pin": "1231",
+      "pin_registered": true
+    }
+  },
+  "g": {
+    "password": "g",
+    "role": "client",
+    "data": {
+      "account_number": "166458241",
+      "balance": 10000111.0,
+      "pin": "5555",
+      "pin_registered": true
+    }
+  },
+  "ThaiSon": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "144781821",
+      "balance": 9000000.0,
+      "pin": "1111",
+      "pin_registered": true
+    }
+  },
+  "TatThanh2": {
+    "password": "123",
+    "role": "client",
+    "data": {
+      "account_number": "809010923",
+      "balance": 9000000.0,
+      "pin": "1410",
+      "pin_registered": true
+    }
+  },
+  "3": {
+    "password": "3",
+    "role": "client",
+    "data": {
+      "account_number": "687694945",
+      "balance": 10000000,
+      "pin": "1111",
+      "pin_registered": true
+    }
+  }
+}

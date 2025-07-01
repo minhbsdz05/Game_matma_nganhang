@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Tạo Mã PIN - DGBank{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl border border-gray-200">
+        <div class="text-center">
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                Thiết lập <span class="text-blue-600">Mã PIN</span>
+            </h1>
+            <p class="mt-2 text-gray-500">Mã PIN này dùng để xác thực các giao dịch quan trọng.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flashes">
+                {% for category, message in messages %}
+                <div class="p-3 rounded-md text-sm font-medium {{ 'bg-red-50 text-red-800' if category == 'error' else 'bg-blue-50 text-blue-800' }}" role="alert">
+                    <p>{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register_pin') }}" class="space-y-6">
+            <div>
+                <label for="pin" class="text-sm font-semibold text-gray-700">Mã PIN mới (4 chữ số)</label>
+                <input id="pin" name="pin" type="password" required maxlength="4" pattern="\d{4}" title="Mã PIN phải là 4 chữ số." class="w-full px-4 py-3 mt-2 text-center text-2xl tracking-[1em] font-bold border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+            </div>
+            <div>
+                <label for="confirm_pin" class="text-sm font-semibold text-gray-700">Xác nhận Mã PIN</label>
+                <input id="confirm_pin" name="confirm_pin" type="password" required maxlength="4" class="w-full px-4 py-3 mt-2 text-center text-2xl tracking-[1em] font-bold border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+            </div>
+            <div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">Lưu Mã PIN</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

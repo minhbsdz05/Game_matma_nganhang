@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block title %}Đăng nhập - DGBank{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl border border-gray-200">
+        <div class="text-center">
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                <span class="text-blue-600">DG</span>Bank
+            </h1>
+            <p class="mt-2 text-gray-500">Đăng nhập để quản lý tài khoản của bạn</p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flashes">
+                {% for category, message in messages %}
+                <div class="p-3 rounded-md text-sm font-medium {{ 'bg-red-50 text-red-800' if category == 'error' else 'bg-blue-50 text-blue-800' }}" role="alert">
+                    <p>{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="space-y-6">
+            <div>
+                <label for="username" class="text-sm font-semibold text-gray-700">Tên đăng nhập</label>
+                <input id="username" name="username" type="text" required class="w-full px-4 py-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+            </div>
+            <div>
+                <label for="password" class="text-sm font-semibold text-gray-700">Mật khẩu</label>
+                <input id="password" name="password" type="password" required class="w-full px-4 py-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+            </div>
+            <div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">Đăng nhập</button>
+            </div>
+        </form>
+        <p class="text-sm text-center text-gray-500">
+            Chưa có tài khoản? <a href="{{ url_for('register') }}" class="font-semibold text-blue-600 hover:text-blue-500">Đăng ký ngay</a>
+        </p>
+        <p class="text-xs text-center text-gray-400">
+            Dành cho Quản trị viên? <a href="{{ url_for('admin_login') }}" class="font-medium text-gray-600 hover:text-gray-900">Đăng nhập tại đây</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

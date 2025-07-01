@@ -1,0 +1,321 @@
+{% extends "layout.html" %}
+{% block title %}Bảng điều khiển SOC{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Nền gradient tối và màu chữ mặc định cho toàn bộ trang */
+    body { 
+        background-color: #0f172a; /* fallback slate-900 */
+        background-image: radial-gradient(circle at top, #1e293b, #0f172a 50%);
+        color: #e2e8f0; /* slate-200 */
+    }
+    
+    /* Tùy chỉnh thanh cuộn cho nền tối */
+    .dark-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .dark-scrollbar::-webkit-scrollbar-track { background: #1e293b; } /* slate-800 */
+    .dark-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; } /* slate-600 */
+    .dark-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; } /* slate-500 */
+
+    /* Các màu trạng thái */
+    .status-pending { color: #f59e0b; background-color: #f59e0b20; border: 1px solid #f59e0b50; }
+    .status-success { color: #22c55e; background-color: #22c55e20; border: 1px solid #22c55e50; }
+    .status-fail { color: #ef4444; background-color: #ef444420; border: 1px solid #ef444450; }
+    
+    /* Kết quả của hành động bảo mật */
+    .action-result { 
+        background-color: #1e293b; /* slate-800 */
+        color: #94a3b8; /* slate-400 */
+        padding: 8px 12px;
+        margin-top: 8px; 
+        border-radius: 6px; 
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.8rem;
+        word-wrap: break-word;
+        border: 1px solid #334155; /* slate-700 */
+    }
+
+    /* Các nút hành động (AES, RSA, SHA) */
+    .action-button {
+        transition: all 0.2s ease-in-out;
+    }
+    .action-button[aria-checked="true"] {
+        background-color: #3b82f6; /* blue-600 */
+        color: white;
+        border-color: #3b82f6;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dark min-h-screen">
+    <header class="flex flex-wrap justify-between items-center gap-4 mb-6 border-b border-slate-800 p-4 sticky top-0 bg-slate-900/80 backdrop-blur-lg z-20">
+        <div>
+            <h1 class="text-xl font-bold text-slate-100 tracking-tight">Trung tâm Điều hành An ninh (SOC)</h1>
+            <p class="text-sm text-slate-400">Quản trị viên: <span class="font-semibold text-blue-400">{{ current_user.id }}</span></p>
+        </div>
+        <div class="flex items-center space-x-6">
+            <p class="text-lg">Điểm: <span id="score" class="font-bold text-2xl text-green-400">{{ current_user.data.score }}</span></p>
+            <a href="{{ url_for('logout') }}" class="px-4 py-2 text-sm font-semibold bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 hover:text-red-300 transition-colors">Đăng xuất</a>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 p-4">
+        <aside class="xl:col-span-1 bg-slate-900/50 border border-slate-800 p-4 rounded-xl h-full backdrop-blur-lg">
+            <h2 class="text-lg font-semibold text-slate-300 border-b border-slate-700 pb-2 mb-4">Trạng thái Mạng Client</h2>
+            <div id="client-list" class="space-y-3 dark-scrollbar overflow-y-auto max-h-[75vh]">
+                {% for client in clients %}
+                <div class="p-3 bg-slate-800/50 border border-slate-700 rounded-lg" data-user-id="{{ client.id }}">
+                    <p class="font-semibold text-slate-200">{{ client.id }}</p>
+                    <p class="text-xs text-slate-400">STK: {{ client.data.account_number }}</p>
+                    <p class="balance-info text-sm text-green-400 font-medium">{{ "{:,.0f}".format(client.data.balance) }} VND</p>
+                </div>
+                {% else %}
+                <p class="text-slate-500 text-sm">Không có client nào kết nối.</p>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <main id="request-queue" class="xl:col-span-2 space-y-4 dark-scrollbar overflow-y-auto max-h-[85vh] p-1">
+            <h2 class="text-lg font-semibold text-slate-300 border-b border-slate-700 pb-2 sticky top-0 bg-slate-900/95 z-10 backdrop-blur-sm">Hàng chờ Yêu cầu Bảo mật</h2>
+            <div id="placeholder" class="text-center text-slate-600 py-24">
+                <p>Đang chờ yêu cầu giao dịch...</p>
+            </div>
+        </main>
+        
+        <aside class="xl:col-span-1 bg-slate-900/50 border border-slate-800 p-4 rounded-xl h-full backdrop-blur-lg">
+             <h2 class="text-lg font-semibold text-slate-300 border-b border-slate-700 pb-2 mb-4">Nhật ký Sự kiện Hệ thống</h2>
+             <div id="log-panel" class="space-y-2 dark-scrollbar overflow-y-auto max-h-[80vh]"></div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const socket = io();
+        const queueDiv = document.getElementById('request-queue');
+        const logPanel = document.getElementById('log-panel');
+        const scoreSpan = document.getElementById('score');
+        const placeholder = document.getElementById('placeholder');
+        const clientListDiv = document.getElementById('client-list');
+        const currentAdminId = "{{ current_user.id }}";
+
+        socket.on('connect', () => addLog('Giao diện SOC đã kết nối.', 'system'));
+        socket.on('incoming_request', createRequestCard);
+        socket.on('request_result', handleRequestResult);
+        socket.on('request_requeued', handleRequeuedRequest);
+        socket.on('update_client_list', updateClientList);
+        socket.on('security_action_result', handleSecurityActionResult);
+        socket.on('otp_validation_complete', handleOtpValidationComplete);
+
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry text-sm flex gap-3';
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'text-slate-600 flex-shrink-0';
+            timeSpan.textContent = new Date().toLocaleTimeString();
+
+            const msgSpan = document.createElement('span');
+            let typeColor = 'text-slate-400';
+            if (type === 'success') typeColor = 'text-green-400';
+            if (type === 'error') typeColor = 'text-red-400';
+            if (type === 'system') typeColor = 'text-blue-400';
+            msgSpan.className = `break-words ${typeColor}`;
+            msgSpan.innerHTML = message;
+            
+            logEntry.appendChild(timeSpan);
+            logEntry.appendChild(msgSpan);
+            logPanel.prepend(logEntry);
+        }
+
+        function createRequestCard(data) {
+            if (placeholder) placeholder.style.display = 'none';
+            const card = document.createElement('div');
+            card.id = data.id;
+            card.dataset.requestInfo = JSON.stringify(data);
+            card.className = 'request-card bg-slate-900/80 border border-slate-700 p-4 rounded-lg shadow-md transition-all duration-300';
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-100">${data.type_name}</h3>
+                        <p class="text-xs text-slate-500 font-mono">ID: ${data.id}</p>
+                    </div>
+                    <span class="status status-pending text-xs font-semibold px-2 py-1 rounded-full">ĐANG CHỜ</span>
+                </div>
+                <div class="mt-4 text-sm text-slate-300 border-t border-slate-800 pt-3"><p>${data.details}</p></div>
+                <div class="mt-4">
+                    <h4 class="font-semibold text-sm text-slate-400 mb-2">Hành động Giao thức Bảo mật:</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button role="checkbox" aria-checked="false" data-action="aes" class="action-button col-span-1 py-2 px-3 text-sm font-semibold text-slate-300 bg-slate-800/60 border border-slate-700 rounded-md hover:bg-slate-700">AES</button>
+                        <button role="checkbox" aria-checked="false" data-action="rsa" class="action-button col-span-1 py-2 px-3 text-sm font-semibold text-slate-300 bg-slate-800/60 border border-slate-700 rounded-md hover:bg-slate-700">RSA</button>
+                        <button role="checkbox" aria-checked="false" data-action="sha" class="action-button col-span-1 py-2 px-3 text-sm font-semibold text-slate-300 bg-slate-800/60 border border-slate-700 rounded-md hover:bg-slate-700">SHA</button>
+                    </div>
+                </div>
+                <div id="actions-results-${data.id}" class="mt-2 space-y-2"></div>
+                <div class="mt-4 border-t border-slate-800 pt-3 text-right">
+                    <button class="process-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Xử lý Yêu cầu</button>
+                </div>
+                <div class="feedback-panel mt-4 p-3 rounded-lg border-l-4 hidden"></div>`;
+            queueDiv.prepend(card);
+            
+            card.querySelector('.process-btn').addEventListener('click', () => {
+                const requestInfo = JSON.parse(card.dataset.requestInfo);
+                const actionButtons = card.querySelectorAll('.action-button[aria-checked="true"]');
+                const actions = Array.from(actionButtons).map(btn => btn.dataset.action);
+                const button = card.querySelector('.process-btn');
+                button.disabled = true;
+                button.textContent = 'Đang xử lý...';
+                socket.emit('secure_request', {...requestInfo, actions});
+            });
+
+            card.querySelectorAll('.action-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const isChecked = button.getAttribute('aria-checked') === 'true';
+                    button.setAttribute('aria-checked', !isChecked);
+                    const requestInfo = JSON.parse(card.dataset.requestInfo);
+                    const action = button.dataset.action;
+
+                    if (!isChecked && (action === 'aes' || action === 'rsa')) {
+                         socket.emit('request_security_action', { req_id: requestInfo.id, action: action });
+                    }
+                });
+            });
+            addLog(`Yêu cầu mới #${data.id} từ <b>${data.user_id}</b>.`, 'info');
+        }
+        
+        function handleSecurityActionResult(data) {
+            const resultsContainer = document.getElementById(`actions-results-${data.req_id}`);
+            if (!resultsContainer) return;
+            let resultDiv = document.getElementById(`result-${data.req_id}-${data.action}`);
+            if (!resultDiv) {
+                resultDiv = document.createElement('div');
+                resultDiv.id = `result-${data.req_id}-${data.action}`;
+                resultDiv.className = 'action-result';
+                resultsContainer.appendChild(resultDiv);
+            }
+            resultDiv.innerHTML = data.result.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function handleRequestResult(result) {
+            const card = document.getElementById(result.id);
+            if (!card) return;
+            
+            if(result.is_correct) {
+                // For transfers, points are handled later. Don't update score here.
+                if (currentAdminId && result.type_key !== 'transfer') {
+                    scoreSpan.textContent = result.new_score;
+                }
+                
+                card.classList.add('border-green-500/50');
+                const feedbackPanel = card.querySelector('.feedback-panel');
+                feedbackPanel.innerHTML = result.feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                feedbackPanel.className = 'feedback-panel mt-4 p-3 rounded-lg border-l-4 border-green-500 bg-green-500/10 text-green-300';
+                feedbackPanel.classList.remove('hidden');
+                
+                const statusSpan = card.querySelector('.status');
+                statusSpan.textContent = 'THÀNH CÔNG';
+                statusSpan.className = 'status status-success text-xs font-semibold px-2 py-1 rounded-full';
+                
+                if (result.type_key === 'transfer') {
+                     addLog(`Yêu cầu #${result.id} đã qua bước 1. Chờ OTP...`, 'info');
+                } else {
+                     addLog(`Yêu cầu #${result.id} đã xử lý <b>thành công</b>.`, 'success');
+                }
+                card.querySelectorAll('button').forEach(el => el.disabled = true);
+            }
+        }
+
+        function handleRequeuedRequest(data) {
+            const card = document.getElementById(data.id);
+            if (!card) return;
+            if (data.failed_admin_id === currentAdminId) {
+                scoreSpan.textContent = data.new_score;
+            }
+            addLog(`Yêu cầu #${data.id} xử lý thất bại bởi ${data.failed_admin_id}. Đã đưa lại vào hàng chờ.`, 'error');
+
+            const feedbackPanel = card.querySelector('.feedback-panel');
+            feedbackPanel.innerHTML = data.feedback;
+            feedbackPanel.className = 'feedback-panel mt-4 p-3 rounded-lg border-l-4 border-red-500 bg-red-500/10 text-red-300';
+            feedbackPanel.classList.remove('hidden');
+
+            const statusSpan = card.querySelector('.status');
+            statusSpan.textContent = 'LỖI - ĐANG RESET';
+            statusSpan.className = 'status status-fail text-xs font-semibold px-2 py-1 rounded-full';
+            card.querySelectorAll('button').forEach(el => el.disabled = true);
+
+            setTimeout(() => {
+                card.querySelectorAll('.action-button').forEach(btn => {
+                    btn.setAttribute('aria-checked', 'false');
+                    btn.disabled = false;
+                });
+                card.querySelector('.process-btn').disabled = false;
+                card.querySelector('.process-btn').textContent = 'Xử lý Yêu cầu';
+                card.querySelector(`#actions-results-${data.id}`).innerHTML = '';
+                statusSpan.textContent = 'ĐANG CHỜ';
+                statusSpan.className = 'status status-pending text-xs font-semibold px-2 py-1 rounded-full';
+                feedbackPanel.classList.add('hidden');
+            }, 3500);
+        }
+        
+        function handleOtpValidationComplete(data) {
+            // Log the outcome for all admins
+            const fullLogMessage = `${data.log_message} (+${data.points_change} điểm)`;
+            addLog(fullLogMessage, data.success ? 'success' : 'error');
+            
+            // Update score only for the admin who handled the request
+            if (data.admin_id === currentAdminId) {
+                scoreSpan.textContent = data.new_score;
+            }
+
+            // Update the specific request card's feedback panel
+            const card = document.getElementById(data.req_id);
+            if (!card) return;
+
+            const feedbackPanel = card.querySelector('.feedback-panel');
+            const statusSpan = card.querySelector('.status');
+
+            if (data.success) {
+                feedbackPanel.innerHTML = `✅ Lựa chọn đúng.<br><b>Giao dịch #${data.req_id} thành công!</b> Client nhập đúng OTP. (+${data.points_change} điểm)`;
+                feedbackPanel.className = 'feedback-panel mt-4 p-3 rounded-lg border-l-4 border-green-500 bg-green-500/10 text-green-300';
+                statusSpan.textContent = 'HOÀN TẤT';
+                statusSpan.className = 'status status-success text-xs font-semibold px-2 py-1 rounded-full';
+            } else {
+                feedbackPanel.innerHTML = `❌ <b>Giao dịch #${data.req_id} thất bại!</b><br>Client nhập sai OTP 3 lần. (${data.points_change} điểm)`;
+                feedbackPanel.className = 'feedback-panel mt-4 p-3 rounded-lg border-l-4 border-red-500 bg-red-500/10 text-red-300';
+                statusSpan.textContent = 'THẤT BẠI';
+                statusSpan.className = 'status status-fail text-xs font-semibold px-2 py-1 rounded-full';
+            }
+        }
+
+        function updateClientList(data) {
+            if (!clientListDiv) return;
+            const currentClientIds = new Set(Array.from(clientListDiv.children).map(el => el.dataset.userId));
+            const newClientIds = new Set(data.clients.map(c => c.id));
+            
+            currentClientIds.forEach(id => {
+                if (!newClientIds.has(id)) {
+                    const elToRemove = clientListDiv.querySelector(`[data-user-id="${id}"]`);
+                    if(elToRemove) elToRemove.remove();
+                }
+            });
+
+            data.clients.forEach(client => {
+                let clientDiv = clientListDiv.querySelector(`[data-user-id="${client.id}"]`);
+                if (!clientDiv) {
+                    clientDiv = document.createElement('div');
+                    clientDiv.className = 'p-3 bg-slate-800/50 border border-slate-700 rounded-lg';
+                    clientDiv.dataset.userId = client.id;
+                    clientListDiv.appendChild(clientDiv);
+                }
+                clientDiv.innerHTML = `
+                    <p class="font-semibold text-slate-200">${client.id}</p>
+                    <p class="text-xs text-slate-400">STK: ${client.data.account_number}</p>
+                    <p class="balance-info text-sm text-green-400 font-medium">${client.data.balance.toLocaleString('vi-VN')} VND</p>
+                `;
+            });
+            addLog('Trạng thái mạng client đã được cập nhật.', 'system');
+        }
+    });
+</script>
+{% endblock %}

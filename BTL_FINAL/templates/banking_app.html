@@ -1,0 +1,347 @@
+{% extends "layout.html" %}
+{% block title %}Trang chủ - DGBank{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-40 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                     <svg class="h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>
+                     <h1 class="text-2xl font-bold text-gray-900 tracking-tighter"><span class="text-blue-600">DG</span>Bank</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="font-semibold text-gray-800">{{ current_user.id }}</p>
+                        <p class="text-sm text-gray-500">STK: {{ current_user.data.account_number }}</p>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition" title="Đăng xuất">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="main-app-view">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                        <h2 class="text-sm font-medium text-gray-500">Số dư khả dụng</h2>
+                        <div id="balance-display" class="mt-2 text-center py-4 bg-gray-50 rounded-lg">
+                            <p id="balance-text" class="text-4xl font-extrabold text-gray-800 tracking-tight">••••••••</p>
+                        </div>
+                        <button id="check-balance-btn" class="w-full mt-4 flex items-center justify-center py-3 px-4 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639l-1.61-7.923A8.047 8.047 0 0110.027 2.028a7.99 7.99 0 017.599 4.382 7.99 7.99 0 01-1.482 8.232l-1.61 7.923a1.012 1.012 0 01-1.012.639H3.048a1.012 1.012 0 01-1.012-.639zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg>
+                            Yêu cầu xem số dư
+                        </button>
+                        <div id="balance-feedback" class="text-center text-sm mt-2 h-5 font-semibold"></div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Thực hiện Chuyển khoản</h2>
+                    <div id="transfer-form-container">
+                        <form id="transfer-form" class="space-y-6">
+                            <div>
+                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Người nhận</label>
+                                 <div class="flex space-x-4 mb-2">
+                                    <label class="flex items-center"><input type="radio" name="recipient_method" value="select" checked class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"> <span class="ml-2 text-sm text-gray-600">Chọn từ danh sách</span></label>
+                                    <label class="flex items-center"><input type="radio" name="recipient_method" value="manual" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"> <span class="ml-2 text-sm text-gray-600">Nhập thủ công</span></label>
+                                 </div>
+                                 <div id="recipient-select-container">
+                                    <select id="recipient-select" name="recipient" class="w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                        {% for r in recipients %}
+                                        <option value="{{ r.id }}">{{ r.id }} - STK: {{ r.data.account_number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                 <div id="recipient-manual-container" class="hidden">
+                                    <input id="recipient-manual" name="recipient_manual" placeholder="Nhập username người nhận" class="w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="amount" class="block text-sm font-semibold text-gray-700">Số tiền (VND)</label>
+                                <input id="amount" name="amount" type="number" required placeholder="0" class="w-full px-4 py-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+                            <button type="submit" class="w-full flex items-center justify-center py-3 px-4 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors duration-300">
+                               <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.82m5.84-2.56a14.953 14.953 0 00-2.33-2.33m-4.44-4.44a14.953 14.953 0 00-2.33 2.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                               Gửi yêu cầu chuyển khoản
+                            </button>
+                        </form>
+                    </div>
+                     <div id="otp-container" class="hidden mt-4 space-y-4">
+                        <p id="otp-message" class="text-center font-semibold text-blue-600"></p>
+                        <input id="otp" name="otp" type="password" maxlength="6" class="w-full px-3 py-4 mt-1 text-center text-2xl tracking-[1em] font-bold border border-gray-300 rounded-lg transition-all focus:outline-none focus:border-blue-500 focus:border-2">
+                        <button id="submit-otp-btn" class="w-full py-3 px-4 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Xác nhận Giao dịch</button>
+                    </div>
+                    <div id="transfer-feedback" class="text-center text-sm mt-4 h-5 font-semibold"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="pin-container" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300 opacity-0">
+    <div id="pin-modal-content" class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full space-y-4 transform transition-all scale-95">
+        <h2 class="text-xl font-bold text-center text-gray-800">Yêu cầu Xác thực</h2>
+        <p class="text-center text-gray-600">Server yêu cầu bạn nhập mã PIN để ký giao dịch.</p>
+        <input id="pin-input" type="password" maxlength="4" class="w-full px-3 py-4 mt-1 text-center text-2xl tracking-[1em] font-bold border border-gray-300 rounded-lg transition-all focus:outline-none focus:border-purple-500 focus:border-2">
+        <button id="submit-pin-btn" class="w-full py-3 px-4 font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700">Gửi mã PIN</button>
+        <div id="pin-feedback" class="text-center text-sm mt-2 h-5 font-semibold"></div>
+    </div>
+</div>
+
+<div id="receipt-view" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300 opacity-0">
+     <div id="receipt-modal-content" class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center space-y-6 transform transition-all scale-95">
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+             <svg class="h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800">Giao dịch Thành công</h2>
+        <div id="receipt" class="text-left space-y-3 p-6 bg-gray-50 rounded-lg border">
+            <div class="flex justify-between"><span class="text-gray-500">Thời gian:</span><strong id="receipt-time" class="text-gray-800"></strong></div>
+            <div class="flex justify-between"><span class="text-gray-500">Số tiền:</span><strong id="receipt-amount" class="text-green-600 text-lg"></strong></div>
+            <div class="flex justify-between"><span class="text-gray-500">Từ tài khoản:</span><strong id="receipt-sender" class="text-gray-800"></strong></div>
+            <div class="flex justify-between"><span class="text-gray-500">Đến tài khoản:</span><strong id="receipt-recipient" class="text-gray-800"></strong></div>
+        </div>
+        <button id="back-to-app-btn" class="w-full py-3 px-4 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Giao dịch mới</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const socket = io();
+        const mainAppView = document.getElementById('main-app-view');
+        const receiptView = document.getElementById('receipt-view');
+        const receiptModalContent = document.getElementById('receipt-modal-content');
+        const backToAppBtn = document.getElementById('back-to-app-btn');
+        const balanceBtn = document.getElementById('check-balance-btn');
+        const balanceText = document.getElementById('balance-text');
+        const balanceFeedback = document.getElementById('balance-feedback');
+        const transferForm = document.getElementById('transfer-form');
+        const transferBtn = transferForm.querySelector('button');
+        const transferFeedback = document.getElementById('transfer-feedback');
+        const recipientMethodRadios = document.querySelectorAll('input[name="recipient_method"]');
+        const recipientSelectContainer = document.getElementById('recipient-select-container');
+        const recipientManualContainer = document.getElementById('recipient-manual-container');
+        const otpContainer = document.getElementById('otp-container');
+        const otpMsg = document.getElementById('otp-message');
+        const otpSubmitBtn = document.getElementById('submit-otp-btn');
+        const otpInput = document.getElementById('otp');
+        const pinContainer = document.getElementById('pin-container');
+        const pinModalContent = document.getElementById('pin-modal-content');
+        const pinSubmitBtn = document.getElementById('submit-pin-btn');
+        const pinInput = document.getElementById('pin-input');
+        const pinFeedback = document.getElementById('pin-feedback');
+
+        let currentReqId = null;
+        let isBalanceVisible = false;
+        let currentBalance = 0;
+
+        const showFeedback = (el, msg, type) => {
+            el.textContent = msg;
+            el.className = `text-center text-sm mt-2 h-5 font-semibold ${type === 'success' ? 'text-green-600' : (type === 'error' ? 'text-red-600' : 'text-blue-600')}`;
+        };
+
+        const resetBalanceButton = () => {
+            isBalanceVisible = false;
+            balanceBtn.disabled = false;
+            balanceBtn.innerHTML = '<svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639l-1.61-7.923A8.047 8.047 0 0110.027 2.028a7.99 7.99 0 017.599 4.382 7.99 7.99 0 01-1.482 8.232l-1.61 7.923a1.012 1.012 0 01-1.012.639H3.048a1.012 1.012 0 01-1.012-.639zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg> Yêu cầu xem số dư';
+            balanceBtn.onclick = balanceButtonHandler;
+        };
+
+        const resetTransferForm = () => {
+            otpContainer.classList.add('hidden');
+            transferForm.reset();
+            transferForm.classList.remove('hidden');
+            transferBtn.disabled = false;
+            transferBtn.innerHTML = '<svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.82m5.84-2.56a14.953 14.953 0 00-2.33-2.33m-4.44-4.44a14.953 14.953 0 00-2.33 2.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Gửi yêu cầu chuyển khoản';
+            transferFeedback.textContent = '';
+        };
+        
+        const balanceButtonHandler = () => {
+            socket.emit('request_balance_check', {});
+            balanceBtn.disabled = true;
+            balanceBtn.textContent = 'Đang chờ Server duyệt...';
+        };
+
+        balanceBtn.addEventListener('click', balanceButtonHandler);
+
+        recipientMethodRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                recipientSelectContainer.classList.toggle('hidden', e.target.value !== 'select');
+                recipientManualContainer.classList.toggle('hidden', e.target.value === 'select');
+            });
+        });
+
+        transferForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const method = document.querySelector('input[name="recipient_method"]:checked').value;
+            const recipient = (method === 'select' ? document.getElementById('recipient-select').value : document.getElementById('recipient-manual').value).trim();
+            const amount = document.getElementById('amount').value;
+
+            if (!amount || amount <= 0) return showFeedback(transferFeedback, 'Vui lòng nhập số tiền hợp lệ.', 'error');
+            if (!recipient) return showFeedback(transferFeedback, 'Vui lòng chọn hoặc nhập người nhận.', 'error');
+
+            socket.emit('request_transfer', { recipient, amount });
+            transferBtn.disabled = true;
+            transferBtn.textContent = 'Đang chờ Server duyệt...';
+        });
+        
+        otpSubmitBtn.addEventListener('click', () => {
+            if (otpInput.value.length === 6 && currentReqId) {
+                socket.emit('submit_otp', { otp: otpInput.value, req_id: currentReqId });
+            } else {
+                showFeedback(transferFeedback, 'Mã OTP phải có 6 chữ số.', 'error');
+            }
+        });
+
+        pinSubmitBtn.addEventListener('click', () => {
+            if(pinInput.value && currentReqId) {
+                socket.emit('submit_pin', { pin: pinInput.value, req_id: currentReqId });
+                showFeedback(pinFeedback, 'Đã gửi PIN, vui lòng chờ...', 'info');
+                pinSubmitBtn.disabled = true;
+            } else {
+                showFeedback(pinFeedback, 'Vui lòng nhập mã PIN.', 'error');
+            }
+        });
+
+        backToAppBtn.addEventListener('click', () => {
+            receiptView.classList.add('opacity-0');
+            receiptModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                receiptView.classList.add('hidden');
+                mainAppView.classList.remove('hidden');
+                balanceText.textContent = '••••••••';
+                resetBalanceButton();
+            }, 300);
+        });
+        
+        function showModal(container, content) {
+            container.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function hideModal(container, content) {
+            container.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => container.classList.add('hidden'), 300);
+        }
+
+        // --- SOCKET LISTENERS ---
+        socket.on('balance_check_approved', (data) => {
+            showFeedback(balanceFeedback, 'Được duyệt! Nhấn nút để Hiện/Ẩn.', 'success');
+            currentBalance = data.balance;
+            balanceBtn.disabled = false;
+            balanceText.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentBalance);
+            isBalanceVisible = true;
+            balanceBtn.innerHTML = '<svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg> Ẩn Số dư';
+            balanceBtn.onclick = () => {
+                if (isBalanceVisible) {
+                    balanceText.textContent = '••••••••';
+                    balanceBtn.innerHTML = '<svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639l-1.61-7.923A8.047 8.047 0 0110.027 2.028a7.99 7.99 0 017.599 4.382 7.99 7.99 0 01-1.482 8.232l-1.61 7.923a1.012 1.012 0 01-1.012.639H3.048a1.012 1.012 0 01-1.012-.639zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg> Hiện Số dư';
+                    isBalanceVisible = false;
+                } else {
+                    balanceText.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentBalance);
+                    balanceBtn.innerHTML = '<svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg> Ẩn Số dư';
+                    isBalanceVisible = true;
+                }
+            };
+        });
+
+        socket.on('otp_required', (data) => {
+            currentReqId = data.req_id;
+            transferForm.classList.add('hidden');
+            otpContainer.classList.remove('hidden');
+            otpInput.value = '';
+            otpMsg.textContent = data.message;
+            showFeedback(transferFeedback, 'Server đã duyệt, vui lòng nhập OTP.', 'success');
+        });
+        
+        socket.on('otp_attempt_failed', (data) => {
+            showFeedback(transferFeedback, data.message, 'error');
+            otpInput.focus();
+        });
+
+        socket.on('prompt_for_pin', (data) => {
+            currentReqId = data.req_id;
+            pinInput.value = '';
+            pinFeedback.textContent = '';
+            pinSubmitBtn.disabled = false;
+            showModal(pinContainer, pinModalContent);
+        });
+
+        socket.on('pin_verification_result', (data) => {
+            if (data.success) {
+                showFeedback(pinFeedback, 'Xác thực thành công!', 'success');
+                setTimeout(() => {
+                    hideModal(pinContainer, pinModalContent);
+                    showFeedback(transferFeedback, 'Đã xác thực PIN, đang chờ Server xử lý...', 'info');
+                }, 1500);
+            } else {
+                showFeedback(pinFeedback, 'Mã PIN không đúng!', 'error');
+                pinSubmitBtn.disabled = false;
+            }
+        });
+
+        socket.on('transfer_complete_receipt', (data) => {
+            document.getElementById('receipt-time').textContent = data.time;
+            document.getElementById('receipt-amount').textContent = data.amount;
+            document.getElementById('receipt-sender').textContent = data.sender;
+            document.getElementById('receipt-recipient').textContent = data.recipient;
+            mainAppView.classList.add('hidden');
+            showModal(receiptView, receiptModalContent);
+            currentBalance = data.new_balance;
+            if (isBalanceVisible) {
+                balanceText.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentBalance);
+            }
+            resetTransferForm();
+        });
+
+        socket.on('transfer_error', (data) => {
+            resetTransferForm();
+            showFeedback(transferFeedback, data.message, 'error');
+        });
+        
+        socket.on('request_failed_try_again', (data) => {
+            if (data.type === 'balance_check') {
+                resetBalanceButton();
+                showFeedback(balanceFeedback, 'Server xử lý sai! Vui lòng thử lại.', 'error');
+            } else if (data.type === 'transfer') {
+                resetTransferForm();
+                showFeedback(transferFeedback, 'Server xử lý sai! Vui lòng thử lại.', 'error');
+            }
+        });
+        
+        socket.on('processing_error_retrying', (data) => {
+            if (balanceBtn.disabled) {
+                showFeedback(balanceFeedback, data.message, 'info');
+                balanceBtn.textContent = 'Đang chờ Server xử lý lại...';
+            } else if (transferBtn.disabled) {
+                showFeedback(transferFeedback, data.message, 'info');
+                transferBtn.textContent = 'Đang chờ Server xử lý lại...';
+            }
+        });
+
+        socket.on('update_client_list', (data) => {
+            const selectEl = document.getElementById('recipient-select');
+            const currentVal = selectEl.value;
+            selectEl.innerHTML = '';
+            const currentUserId = "{{ current_user.id }}";
+            data.clients.forEach(client => {
+                if (client.id !== currentUserId) {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = `${client.id} - STK: ${client.data.account_number}`;
+                    selectEl.appendChild(option);
+                }
+            });
+            selectEl.value = currentVal;
+        });
+    });
+</script>
+{% endblock %}
