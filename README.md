@@ -9,8 +9,6 @@ Một ứng dụng web tương tác được xây dựng bằng **Flask** và **
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-v4-010101?style=for-the-badge&logo=socketdotio)
 ![Tailwind CSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
------
-
 ## 📝 Giới thiệu
 
 Dự án này tạo ra một môi trường mô phỏng thời gian thực, nơi người dùng có thể đóng hai vai trò:
@@ -33,12 +31,6 @@ Mục tiêu của người chơi Admin là đưa ra quyết định chính xác 
 * **🎨 Giao diện hiện đại:** Giao diện người dùng được xây dựng với **Tailwind CSS**, đảm bảo tính thẩm mỹ và đáp ứng tốt trên các thiết bị.
 
 ## 🚀 Demo & Hình ảnh
-
-*(GỢI Ý: Bạn có thể đăng tải ứng dụng lên một dịch vụ miễn phí như PythonAnywhere, Heroku và dán link vào đây)*
-**Link Demo:** `[Chưa có]`
-
-*(GỢI Ý: Thay thế các link `https://placehold.co/...` bằng link ảnh chụp màn hình thực tế của bạn đã được tải lên GitHub hoặc một dịch vụ host ảnh)*
-
 | Giao diện Client (Ngân hàng) | Giao diện Admin (SOC) |
 | :-------------------------: | :-----------------------: |
 | ![Giao diện Client](https://placehold.co/600x400/f1f5f9/0f172a?text=Giao+diện+Client) | ![Giao diện Admin](https://placehold.co/600x400/0f172a/e2e8f0?text=Giao+diện+Admin) |
